@@ -181,7 +181,7 @@ export function handleAtomicMatch_(call: AtomicMatch_Call): void {
     );
 
     mappingHelpers.handleBundleSale(
-      decoded, metadataResult.txId, paymentToken.id,
+      decoded, metadataResult.txId, paymentToken.id, paymentToken.decimals,
       matchPrice, timestamp, timeSeriesResult, metadataResult
     )
 
@@ -193,7 +193,7 @@ export function handleAtomicMatch_(call: AtomicMatch_Call): void {
       let decoded = abi.decodeAbi_transferFrom_Method(mergedCallData)
       mappingHelpers.handleSingleSale(
         decoded, metadataResult.txId, call.inputs.addrs[11],
-        paymentToken.id, matchPrice, timestamp, timeSeriesResult,
+        paymentToken.id, paymentToken.decimals, matchPrice, timestamp, timeSeriesResult,
         metadataResult
       )
     }

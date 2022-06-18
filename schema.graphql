@@ -205,6 +205,9 @@ type Erc20Token implements SmartContract @entity {
   "asset contract's address"
   address: Bytes
 
+  " The number of decimal places this token uses, default to 18 "
+  decimals: Int!
+
   # derived relationships
 
   "related balances"
@@ -377,6 +380,9 @@ type Nft @entity {
   "token's id inside the token"
   tokenId: BigInt
 
+  "Token URI"
+  tokenURI: String
+
   # stored relationships
 
   "related nft contract"
@@ -402,6 +408,12 @@ type NftContract implements SmartContract @entity {
 
   "asset contract's address"
   address: Bytes
+
+  "Name of contract" 
+  name: String
+
+  "Symbol of contract"
+  symbol: String
 
   # derived relationships
 
@@ -450,6 +462,12 @@ type NftTransaction implements SmartContractTransaction @entity {
   "Account receiving the value"
   to: Account!
 
+  "Value of transaction in USD"
+  valueInUSD: BigDecimal!
+
+  "amount paid"
+  amount: BigDecimal!
+
   "related SmartContract, a NftContract entity in this case"
   contract: SmartContract! 
 
@@ -466,6 +484,8 @@ type NftTransaction implements SmartContractTransaction @entity {
 
   "related evm transaction"
   transaction: Transaction!
+
+  dailyNFTTransfer: DailyNFTTransfer!
 
   # time series relationships
 
@@ -1059,6 +1079,33 @@ type Week implements TimeUnit @entity {
 
   "related volume entity"
   volume: Volume! @derivedFrom(field: "timeUnit")
+}
+
+
+type DailyNFTTransfer @entity {
+id: ID! 
+"Daily Count of transaction for a NFT collection"
+count: BigInt! 
+"NFT contract address"
+nft: NftContract!
+
+"Total daily volume in USD"
+volumeInUSD: BigDecimal!
+
+"NFT transaction for this day"
+nftTransactions: [NftTransaction!]! @derivedFrom(field: "dailyNFTTransfer")
+
+"Day count since start of unixtime"
+daySinceEpoch: String!
+
+"Unix timestamp of start of the day"
+startDayTimestamp: BigInt
+
+"Concatenation of day and count of NFT transfer"
+orderCount: String!
+
+"Concatenation of day and USD volume of NFT transfer"
+orderUSDVolume: String
 }
 
 

@@ -1,5 +1,6 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { globalState } from "."
+import { ERC20 } from "../../generated/openseaWyvernExchange/ERC20"
 import { Erc20Transaction, Erc20Token } from "../../generated/schema"
 
 export namespace erc20Tokens {
@@ -11,6 +12,12 @@ export namespace erc20Tokens {
 			entity.address = address
 			globalState.helpers.updateGlobal_erc20tokens_Counter()
 
+			let erc20ContractInstance = ERC20.bind(Address.fromString(address.toHexString()));
+			let decimals = erc20ContractInstance.try_decimals();
+			entity.decimals = 18;
+			if(!decimals.reverted) {
+				entity.decimals = decimals.value;
+			}
 		}
 		return entity as Erc20Token
 	}

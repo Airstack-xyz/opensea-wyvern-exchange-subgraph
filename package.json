@@ -5,7 +5,7 @@
     "test": "rm -rf ./tests/.bin && npx graph test index",
     "codegen": "npx graph codegen",
     "build": "npx graph build",
-    "deploy": "npx graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ protofire/opensea-wyvern-exchange-subgraph"
+    "deploy": "npx graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ 0xsarvesh/opensea-mainnet --access-token c2d1abf83647411eba1003735ee78df1"
   },
   "dependencies": {
     "@graphprotocol/graph-ts": "0.23.1",

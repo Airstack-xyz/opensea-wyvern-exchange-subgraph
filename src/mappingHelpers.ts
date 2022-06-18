@@ -1,5 +1,8 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { DailyNFTTransfer } from "../generated/schema";
 import { abi, accounts, nftContracts, balances, nfts, sales, erc20Tokens, volumes, timeSeries, metadata } from "./modules";
+import { getDayOpenTime, getDaysSinceEpoch } from "./modules/datetime";
+import { getUsdPrice } from "./modules/prices";
 
 export namespace mappingHelpers {
 
@@ -7,7 +10,7 @@ export namespace mappingHelpers {
 	export function handleSingleSale(
 		decoded: abi.Decoded_TransferFrom_Result,
 		transactionId: string, contractAddress: Bytes,
-		paymentTokenId: string, paymentAmount: BigInt,
+		paymentTokenId: string, paymentTokenDecimal: i32, paymentAmount: BigInt,
 		timestamp: BigInt, timeSeriesResult: timeSeries.HandleTimeSeriesResult,
 		metadataResult: metadata.MetadataResult
 	): void {
@@ -37,20 +40,22 @@ export namespace mappingHelpers {
 			contract.id, timeSeriesResult
 		)
 
+		let formattedAmount = paymentAmount.toBigDecimal().div(BigInt.fromI32(10).pow(paymentTokenDecimal as u8).toBigDecimal());
+
 		handleNftTransfer(
 			contract.address!, seller.id, buyer.id, nftId, timestamp, sale.id,
-			nftVolumesResult, timeSeriesResult, metadataResult
-		)
+			nftVolumesResult, timeSeriesResult, metadataResult, paymentTokenId, formattedAmount)
+
 
 		handleErc20Transfer(
-			seller.id, buyer.id, paymentTokenId, paymentAmount, sale.id,
+			seller.id, buyer.id, paymentTokenId, paymentAmount, sale.id, 
 			timestamp, erc20VolumesResult, timeSeriesResult, metadataResult
 		)
 	}
 
 	export function handleBundleSale(
 		decoded: abi.Decoded_atomicize_Result,
-		transactionId: string, paymentTokenId: string,
+		transactionId: string, paymentTokenId: string, paymentTokenDecimal: i32,
 		paymentAmount: BigInt, timestamp: BigInt,
 		timeSeriesResult: timeSeries.HandleTimeSeriesResult,
 		metadataResult: metadata.MetadataResult
@@ -78,10 +83,13 @@ export namespace mappingHelpers {
 
 			let result = volumes.handleNftVolumes(contract.id, timeSeriesResult)
 
+
+			let formattedAmount = paymentAmount.toBigDecimal().div(BigInt.fromI32(10).pow(paymentTokenDecimal as u8).toBigDecimal());
+
 			handleNftTransfer(
 				contractAddress, seller.id, buyer.id, nftId, timestamp, sale.id,
-				result, timeSeriesResult, metadataResult
-			)
+				result, timeSeriesResult, metadataResult, paymentTokenId,  formattedAmount);
+			
 
 		}
 		let volumesResult = volumes.handleErc20Volumes(
@@ -97,33 +105,58 @@ export namespace mappingHelpers {
 	function handleNftTransfer(
 		contractAddress: Bytes, seller: string, buyer: string, nftId: BigInt,
 		timestamp: BigInt, saleId: string, volumesResult: volumes.VolumesResult,
-		timeSeriesResult: timeSeries.HandleTimeSeriesResult, metadataResult: metadata.MetadataResult
+		timeSeriesResult: timeSeries.HandleTimeSeriesResult, metadataResult: metadata.MetadataResult,
+		paymentTokenId: string, paymentAmount: BigDecimal
 
 	): void {
 
 		let contract = nftContracts.getOrCreateNftContract(contractAddress)
 		contract.save()
 
-		let nft = nfts.changeNftOwner(nftId, contract.id, buyer)
+		let nft = nfts.changeNftOwner(nftId, contract.id, buyer, contractAddress)
 		nft.save()
 
 		let nftTransaction = nfts.getOrCreateNftTransfer(
 			nft.id, timestamp, seller, buyer, saleId
 		)
 
+		let erc20ContractAddress = paymentTokenId.split('-')[1];
+		let usdValue  = getUsdPrice(Address.fromString(erc20ContractAddress), paymentAmount);
+		
+		let daySinceEpoch = getDaysSinceEpoch(timestamp.toI32());
+		let dailyNFTTransactionId = contractAddress.toHexString() + "-"+ daySinceEpoch.toString();
+
 		nftTransaction.block = metadataResult.blockId
 		nftTransaction.transaction = metadataResult.txId
-
+		nftTransaction.dailyNFTTransfer = dailyNFTTransactionId;
 		nftTransaction.minuteVolume = volumesResult.minuteVolumeId
 		nftTransaction.hourVolume = volumesResult.hourVolumeId
 		nftTransaction.dayVolume = volumesResult.dayVolumeId
 		nftTransaction.weekVolume = volumesResult.weekVolumeId
+		nftTransaction.valueInUSD = usdValue;
+		nftTransaction.amount = paymentAmount;
 
 		nftTransaction.minute = timeSeriesResult.minute.id
 		nftTransaction.hour = timeSeriesResult.hour.id
 		nftTransaction.day = timeSeriesResult.day.id
 		nftTransaction.week = timeSeriesResult.week.id
 		nftTransaction.save()
+
+		let dailyNFTTransaction = DailyNFTTransfer.load(dailyNFTTransactionId);
+
+		if(dailyNFTTransaction == null) {
+			dailyNFTTransaction = new DailyNFTTransfer(dailyNFTTransactionId);
+			dailyNFTTransaction.count = BigInt.zero();
+			dailyNFTTransaction.nft = contract.id;
+			dailyNFTTransaction.daySinceEpoch = daySinceEpoch;
+			dailyNFTTransaction.startDayTimestamp = getDayOpenTime(timestamp);
+			dailyNFTTransaction.volumeInUSD = BigDecimal.zero();
+		}
+		dailyNFTTransaction.count = dailyNFTTransaction.count.plus(BigInt.fromI32(1));
+		dailyNFTTransaction.orderCount = daySinceEpoch.toString()+"_"+dailyNFTTransaction.count.toString();
+		dailyNFTTransaction.volumeInUSD = dailyNFTTransaction.volumeInUSD.plus(usdValue);
+		dailyNFTTransaction.orderUSDVolume = daySinceEpoch.toString()+"_"+dailyNFTTransaction.volumeInUSD.toString();
+		dailyNFTTransaction.save();
 	}
 
 	function handleErc20Transfer(

@@ -1,11 +1,13 @@
-import { BigInt, ByteArray, log } from "@graphprotocol/graph-ts"
+import { Address, BigInt, ByteArray, Bytes, log } from "@graphprotocol/graph-ts"
 import { globalState } from "."
+import { ERC721MetaData } from "../../generated/openseaWyvernExchange/ERC721MetaData"
 import { Nft, NftTransaction } from "../../generated/schema"
 
 export namespace nfts {
 	export function getOrCreateNft(
-		tokenId: BigInt, contract: string
+		tokenId: BigInt, contract: string, contractAddress: Bytes
 	): Nft {
+
 		let id = contract + "-" + tokenId.toHexString()
 		if (helpers.isIndexTooLarge(id)) {
 			/* took from logs: getOrCreateNft :: isIndexTooLarge !! setting id to 'TOO_LARGE_INDEX' 
@@ -24,13 +26,19 @@ export namespace nfts {
 			entity.contract = contract
 			entity.tokenId = tokenId
 			globalState.helpers.updateGlobal_nfts_Counter()
+			let erc721 = ERC721MetaData.bind(Address.fromString(contractAddress.toHexString()));
+			let tokenURI  = erc721.try_tokenURI(tokenId);
+			if(!tokenURI.reverted) {
+				entity.tokenURI = tokenURI.value;
+			}
+
 		}
 		return entity as Nft
 	}
 	export function changeNftOwner(
-		tokenId: BigInt, contract: string, newOwner: string
+		tokenId: BigInt, contract: string, newOwner: string, contractAddress: Bytes
 	): Nft {
-		let entity = getOrCreateNft(tokenId, contract)
+		let entity = getOrCreateNft(tokenId, contract, contractAddress)
 		entity.owner = newOwner
 		return entity as Nft
 	}
