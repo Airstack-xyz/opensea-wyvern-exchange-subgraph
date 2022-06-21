@@ -4,7 +4,6 @@ import { Order } from "../../generated/schema";
 import { shared } from "./";
 import { globalState } from "./globalState";
 import { metadata } from "./metadata";
-import { timeSeries } from "./timeSeries";
 
 export namespace orders {
 
@@ -270,17 +269,6 @@ export namespace orders {
 	}
 
 	export namespace mutations {
-
-		export function setTimeSeriesRelationships(
-			order: Order,
-			timeSeriesResult: timeSeries.HandleTimeSeriesResult,
-		): Order {
-			order.minute = timeSeriesResult.minute.id
-			order.hour = timeSeriesResult.hour.id
-			order.day = timeSeriesResult.day.id
-			order.week = timeSeriesResult.week.id
-			return order
-		}
 
 		export function setMetadataRelationships(
 			order: Order,

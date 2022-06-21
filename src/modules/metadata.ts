@@ -1,5 +1,5 @@
 import { BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
-import { globalState, timeSeries } from ".";
+import { globalState } from ".";
 import { Block, Transaction } from "../../generated/schema";
 
 export namespace metadata {
@@ -19,13 +19,8 @@ export namespace metadata {
 	export function handleEvmMetadata(
 		evmBlock: ethereum.Block,
 		evmTransaction: ethereum.Transaction,
-		timeSeriesResult: timeSeries.HandleTimeSeriesResult
 	): MetadataResult {
 		let block = blocks.getOrCreateBlock(evmBlock.timestamp, evmBlock.number)
-		block.minute = timeSeriesResult.minute.id
-		block.hour = timeSeriesResult.hour.id
-		block.day = timeSeriesResult.day.id
-		block.week = timeSeriesResult.week.id
 		block.save()
 
 		let transaction = transactions.getOrCreateTransactionMeta(
@@ -34,10 +29,7 @@ export namespace metadata {
 			evmTransaction.from,
 			evmTransaction.gasPrice,
 		)
-		transaction.minute = timeSeriesResult.minute.id
-		transaction.hour = timeSeriesResult.hour.id
-		transaction.day = timeSeriesResult.day.id
-		transaction.week = timeSeriesResult.week.id
+
 		transaction.save()
 
 		return new MetadataResult(

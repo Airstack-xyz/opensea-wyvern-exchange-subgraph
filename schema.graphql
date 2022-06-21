@@ -40,8 +40,6 @@ type GlobalState @entity {
 
   accounts: EntityCounter!
 
-  balances: EntityCounter!
-
   erc20tokens: EntityCounter!
 
   erc20transactions: EntityCounter!
@@ -59,22 +57,6 @@ type GlobalState @entity {
   blocks: EntityCounter!
 
   transactions: EntityCounter!
-
-  minuteVolumes: EntityCounter!
-
-  hourVolumes: EntityCounter!
-
-  dayVolumes: EntityCounter!
-
-  weekVolumes: EntityCounter!
-
-  minutes: EntityCounter!
-
-  hours: EntityCounter!
-
-  days: EntityCounter!
-
-  weeks: EntityCounter!
 }
 
 type EntityCounter @entity {
@@ -109,9 +91,6 @@ type Account @entity {
 
   # derived relationships
 
-  "balances in this account scop"
-  balances: [Balance!]! @derivedFrom(field: "account")
-
   "erc20 deposits"
   incomingErc20Transactions: [Erc20Transaction!]! @derivedFrom(field: "to")
 
@@ -135,33 +114,6 @@ type Account @entity {
 
 }
 
-# "a Balance as a many to many relationship between erc20 tokens and accounts"
-type Balance @entity {
-  "internal id used for indexation"
-  id: ID!
-
-  # stored values
-
-  "token's amount"
-  amount: BigInt!
-
-  # stored relationships
-
-  "balance's owner"
-  account: Account!
-
-  "related token"
-  token: Erc20Token!
-
-  # derived relationships
-
-  "erc20Transactions that increased this balance"
-  increasingTransactions: [Erc20Transaction!]! @derivedFrom(field: "increasedBalance")
-
-  "erc20Transactions that decreased this balance"
-  decreasingTransactions: [Erc20Transaction!]! @derivedFrom(field: "decreasedBalance")
-}
-
 interface SmartContract {
    "internal id used for indexation"
   id: ID!
@@ -178,21 +130,6 @@ interface SmartContract {
 
   "all the orders where this asset was traded"
   orders: [Order!]!
-
-   # volume relationships
-
-  "related list of minuteVolume entities for each contract"
-  minuteVolumes: [MinuteVolume!]!
-  
-  "related list of hourVolume entities for each contract"
-  hourVolumes: [HourVolume!]!
-
-  "related list of dayVolume entities for each contract"
-  dayVolumes: [DayVolume!]!
-
-  "related list of dayVolume entities for each contract"
-  weekVolumes: [WeekVolume!]!
-
 }
 
 # "an Erc20Token as payment token for a sale"
@@ -209,9 +146,6 @@ type Erc20Token implements SmartContract @entity {
   decimals: Int!
 
   # derived relationships
-
-  "related balances"
-  balances: [Balance!]! @derivedFrom(field: "token")
   
   "related transactions"
   tokenTransactions: [SmartContractTransaction!]! @derivedFrom(field: "contract")
@@ -221,21 +155,6 @@ type Erc20Token implements SmartContract @entity {
 
   "all the orders where this token was used to pay"
   orders: [Order!]! @derivedFrom(field: "paymentToken")
-
-  # volume relationships
-
-  "related list of minuteVolume entities for each nft contract in which this token was paymentToken"
-  minuteVolumes: [MinuteVolume!]! @derivedFrom(field: "contract")
-  
-  "related list of hourVolume entities for each nft contract in which this token was paymentToken"
-  hourVolumes: [HourVolume!]! @derivedFrom(field: "contract")
-
-  "related list of dayVolume entities for each nft contract in which this token was paymentToken"
-  dayVolumes: [DayVolume!]! @derivedFrom(field: "contract")
-
-  "related list of dayVolume entities for each nft contract in which this token was paymentToken"
-  weekVolumes: [WeekVolume!]! @derivedFrom(field: "contract")
-
 }
 
 interface SmartContractTransaction {
@@ -270,34 +189,6 @@ interface SmartContractTransaction {
   "related transaction"
   transaction: Transaction!
 
-  # time series relationships
-
-  "related minute entity"
-  minute: Minute!
-  
-  "related hour entity"
-  hour: Hour!
-
-  "related day entity"
-  day: Day!
-
-  "related week entity"
-  week: Week!
-
-  # volume relationships
-
-  "related minuteVolume entity"
-  minuteVolume: MinuteVolume!
-  
-  "related hourVolume entity"
-  hourVolume: HourVolume!
-
-  "related dayVolume entity"
-  dayVolume: DayVolume!
-
-  "related weekVolume entity"
-  weekVolume: WeekVolume!
-
 }
 
 # "A transaction of a erc20Token as payment for a sale"
@@ -324,12 +215,6 @@ type Erc20Transaction implements SmartContractTransaction @entity{
   "related SmartContract, a Erc20Token entity in this case"
   contract: SmartContract! 
 
-  "Balance entity that increased it funds"
-  increasedBalance: Balance!
-
-  "Balance entity that decreaced it funds"
-  decreasedBalance: Balance!
-
   "related sale"
   sale: Sale!
 
@@ -340,35 +225,6 @@ type Erc20Transaction implements SmartContractTransaction @entity{
 
   "related transaction"
   transaction: Transaction!
-
-  # time series relationships
-
-  "related minute entity"
-  minute: Minute!
-  
-  "related hour entity"
-  hour: Hour!
-
-  "related day entity"
-  day: Day!
-
-  "related week entity"
-  week: Week!
-
-  # volume relationships
-
-  "related minuteVolume entity"
-  minuteVolume: MinuteVolume!
-  
-  "related hourVolume entity"
-  hourVolume: HourVolume!
-
-  "related dayVolume entity"
-  dayVolume: DayVolume!
-
-  "related weekVolume entity"
-  weekVolume: WeekVolume!
-
 }
 
 type Nft @entity {
@@ -428,20 +284,6 @@ type NftContract implements SmartContract @entity {
 
   # nfts contained in this contract
   nfts: [Nft!]! @derivedFrom(field: "contract")
-  
-  # volume relationships
-
-  "related list of minuteVolume entities for each erc20Token that paid for an NFT from this contract"
-  minuteVolumes: [MinuteVolume!]! @derivedFrom(field: "contract")
-  
-  "related list of hourVolume entities for each erc20Token that paid for an NFT from this contract"
-  hourVolumes: [HourVolume!]! @derivedFrom(field: "contract")
-
-  "related list of dayVolume entities for each erc20Token that paid for an NFT from this contract"
-  dayVolumes: [DayVolume!]! @derivedFrom(field: "contract")
-
-  "related list of dayVolume entities for each erc20Token that paid for an NFT from this contract"
-  weekVolumes: [WeekVolume!]! @derivedFrom(field: "contract")
 
 }
 
@@ -487,34 +329,6 @@ type NftTransaction implements SmartContractTransaction @entity {
 
   dailyNFTTransfer: DailyNFTTransfer!
 
-  # time series relationships
-
-  "related minute entity"
-  minute: Minute!
-  
-  "related hour entity"
-  hour: Hour!
-
-  "related day entity"
-  day: Day!
-
-  "related week entity"
-  week: Week!
-
-  # volume relationships
-
-  "related minuteVolume entity"
-  minuteVolume: MinuteVolume!
-  
-  "related hourVolume entity"
-  hourVolume: HourVolume!
-
-  "related dayVolume entity"
-  dayVolume: DayVolume!
-
-  "related weekVolume entity"
-  weekVolume: WeekVolume!
-
 }
 
 # "A Sale is the relationship between matched orders"
@@ -547,34 +361,6 @@ type Sale @entity {
   "related evm transaction"
   transaction: Transaction!
   
-  # time series relationships
-
-  "related minute entity"
-  minute: Minute!
-  
-  "related hour entity"
-  hour: Hour!
-
-  "related day entity"
-  day: Day!
-
-  "related week entity"
-  week: Week!
-
-  # volume relationships
-
-  "related minuteVolume entity"
-  minuteVolume: MinuteVolume!
-  
-  "related hourVolume entity"
-  hourVolume: HourVolume!
-
-  "related dayVolume entity"
-  dayVolume: DayVolume!
-
-  "related weekVolume entity"
-  weekVolume: WeekVolume!
-
 }
 
 
@@ -719,34 +505,6 @@ type Order @entity {
   "related transaction"
   transaction: Transaction!
 
-  # time series relationships
-
-  "related minute entity"
-  minute: Minute!
-  
-  "related hour entity"
-  hour: Hour!
-
-  "related day entity"
-  day: Day!
-
-  "related week entity"
-  week: Week!
-
-  # time series relationships
-
-  "related minuteVolume entity"
-  minuteVolume: MinuteVolume!
-  
-  "related hourVolume entity"
-  hourVolume: HourVolume!
-
-  "related dayVolume entity"
-  dayVolume: DayVolume!
-
-  "related weekVolume entity"
-  weekVolume: WeekVolume!
-
 }
 
 
@@ -778,18 +536,6 @@ type Block implements Metadata @entity {
 	"Orders created on this block"
 	orders: [Order!] @derivedFrom(field: "block")
 
-  "related minute entity"
-  minute: Minute
-  
-  "related hour entity"
-  hour: Hour
-
-  "related day entity"
-  day: Day
-
-  "related week entity"
-  week: Week
-
 }
 
 type Transaction implements Metadata @entity {
@@ -811,275 +557,8 @@ type Transaction implements Metadata @entity {
   "Order created on this Transaction"
 	order: Order
 
-  # time series relationships
-
-  "related minute entity"
-  minute: Minute
-  
-  "related hour entity"
-  hour: Hour
-
-  "related day entity"
-  day: Day
-
-  "related week entity"
-  week: Week
 }
 
-
-##
-
-# Volumes
-
-##
-"""
-A volume entity relates to
-- one time serie entity 
-- one erc20Token
-- one nftContract
-- Many erc20tx 
-- Many nftTx
-"""
-
-# TODO add derived list to sales
-interface Volume {
-  "internal id used for indexation"
-  id: ID! # Set to `timeUnitName-${smartContract.id}-${epoch}`
-
-  # stored values
-
-  "amount of some contract's token traded for this nft contract in a given time frame"
-  amount: BigInt!
-
-
-  "amount of transactions for this contract"
-  transactionAmount: BigInt!
-
-  # stored relationships
-
-  "related smartContract"
-  contract: SmartContract!
-
-  "related time serie entitiy, ej dailyVolume for x day is related to x dayCandle"
-  timeUnit: TimeUnit!
-
-  # derived relationships
-
-  "a list of smart Contract Transactions"
-  smartContractTransactions: [SmartContractTransaction!]!
-}
-
-type MinuteVolume implements Volume @entity {
-  "internal id used for indexation"
-  id: ID! # Set to `timeUnitName-${smartContract.id}-${epoch}`
-
-  # stored values
-
-  "amount of some contract's token traded for this nft contract in a given time frame"
-  amount: BigInt!
-
-  "amount of transactions for this contract"
-  transactionAmount: BigInt!
-
-  # stored relationships
-
-  "related smartContract"
-  contract: SmartContract!
-
-  "related time serie entitiy, ej dailyVolume for x day is related to x dayCandle"
-  timeUnit: TimeUnit!
-
-  # derived relationships
-
-  "a list of smart Contract Transactions"
-  smartContractTransactions: [SmartContractTransaction!]! @derivedFrom(field: "minuteVolume")
-}
-
-type HourVolume implements Volume @entity {
-  "internal id used for indexation"
-  id: ID! # Set to `timeUnitName-${smartContract.id}-${epoch}`
-
-  # stored values
-
-  "amount of some contract's token traded for this nft contract in a given time frame"
-  amount: BigInt!
-
-  "amount of transactions for this contract"
-  transactionAmount: BigInt!
-
-  # stored relationships
-
-  "related smartContract"
-  contract: SmartContract!
-
-  "related time serie entitiy, ej dailyVolume for x day is related to x dayCandle"
-  timeUnit: TimeUnit!
-
-  # derived relationships
-
-  "a list of smart Contract Transactions"
-  smartContractTransactions: [SmartContractTransaction!]! @derivedFrom(field:"hourVolume")
-}
-
-type DayVolume implements Volume @entity {
-  "internal id used for indexation"
-  id: ID! # Set to `timeUnitName-${smartContract.id}-${epoch}`
-
-  # stored values
-
-  "amount of some contract's token traded for this nft contract in a given time frame"
-  amount: BigInt!
-
-  "amount of transactions for this contract"
-  transactionAmount: BigInt!
-
-  # stored relationships
-
-  "related smartContract"
-  contract: SmartContract!
-
-  "related time serie entitiy, ej dailyVolume for x day is related to x dayCandle"
-  timeUnit: TimeUnit!
-
-  # derived relationships
-
-  "a list of smart Contract Transactions"
-  smartContractTransactions: [SmartContractTransaction!]! @derivedFrom(field:"dayVolume")
-}
-
-type WeekVolume implements Volume @entity {
-  "internal id used for indexation"
-  id: ID! # Set to `timeUnitName-${smartContract.id}-${epoch}`
-
-  # stored values
-
-  "amount of some contract's token traded for this nft contract in a given time frame"
-  amount: BigInt!
-
-  "amount of transactions for this contract"
-  transactionAmount: BigInt!
-
-  # stored relationships
-
-  "related smartContract"
-  contract: SmartContract!
-
-  "related time serie entitiy, ej dailyVolume for x day is related to x dayCandle"
-  timeUnit: TimeUnit!
-
-  # derived relationships
-
-  "a list of smart Contract Transactions"
-  smartContractTransactions: [SmartContractTransaction!]! @derivedFrom(field:"weekVolume")
-}
-
-
-
-##
-
-# Time series
-
-##
-
-interface TimeUnit {
-  "internal id used for indexation"
-  id: ID!
-
-  "timestamp division of the starting point"
-  epoch: BigInt!
-
-  "orders filled at this time candle"
-  orders: [Order!]!
-
-  "blocks signed at this thime candle"
-  blocks: [Block!]
-
-  "transactions created at this thime candle"
-  transactions: [Transaction!]!
-
-  "related volume entity"
-  volume: Volume!
-}
-
-type Minute implements TimeUnit @entity {
-  "internal id used for indexation"
-  id: ID!
-
-  "timestamp division of the starting point"
-  epoch: BigInt!
-
-  "orders filled at this time candle"
-  orders: [Order!]! @derivedFrom(field: "minute")
-
-  "blocks signed at this thime candle"
-  blocks: [Block!] @derivedFrom(field: "minute")
-
-  "transactions created at this thime candle"
-  transactions: [Transaction!]! @derivedFrom(field: "minute")
-
-  "related volume entity"
-  volume: Volume! @derivedFrom(field: "timeUnit")
-}
-
-type Hour implements TimeUnit @entity {
-  "internal id used for indexation"
-  id: ID!
-
-  "timestamp division of the starting point"
-  epoch: BigInt!
-
-  "orders filled at this time candle"
-  orders: [Order!]! @derivedFrom(field: "hour")
-  
-  "blocks signed at this thime candle"
-  blocks: [Block!] @derivedFrom(field: "hour")
-
-  "transactions created at this thime candle"
-  transactions: [Transaction!]! @derivedFrom(field: "hour")
-
-  "related volume entity"
-  volume: Volume! @derivedFrom(field: "timeUnit")
-}
-
-type Day implements TimeUnit @entity {
-  "internal id used for indexation"
-  id: ID!
-
-  "timestamp division of the starting point"
-  epoch: BigInt!
-
-  "orders filled at this time candle"
-  orders: [Order!]! @derivedFrom(field: "day")
-  
-  "blocks signed at this thime candle"
-  blocks: [Block!] @derivedFrom(field: "day")
-
-  "transactions created at this thime candle"
-  transactions: [Transaction!]! @derivedFrom(field: "day")
-
-  "related volume entity"
-  volume: Volume! @derivedFrom(field: "timeUnit")
-}
-
-type Week implements TimeUnit @entity {
-  "internal id used for indexation"
-  id: ID!
-
-  "timestamp division of the starting point"
-  epoch: BigInt!
-
-  "orders filled at this time candle"
-  orders: [Order!]! @derivedFrom(field: "week")
-
-  "blocks signed at this thime candle"
-  blocks: [Block!] @derivedFrom(field: "week")
-
-  "transactions created at this thime candle"
-  transactions: [Transaction!]! @derivedFrom(field: "week")
-
-  "related volume entity"
-  volume: Volume! @derivedFrom(field: "timeUnit")
-}
 
 
 type DailyNFTTransfer @entity {

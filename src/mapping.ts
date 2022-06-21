@@ -7,8 +7,6 @@ import {
   erc20Tokens,
   metadata,
   orders,
-  shared,
-  timeSeries,
 } from "./modules"
 
 // TODO: add event handlers
@@ -67,10 +65,9 @@ import {
 
 export function handleAtomicMatch_(call: AtomicMatch_Call): void {
   let timestamp = call.block.timestamp
-  let timeSeriesResult = timeSeries.handleTimeSeries(timestamp)
 
   let metadataResult = metadata.handleEvmMetadata(
-    call.block, call.transaction, timeSeriesResult
+    call.block, call.transaction
   )
 
 
@@ -120,9 +117,7 @@ export function handleAtomicMatch_(call: AtomicMatch_Call): void {
     paymentToken.id, call.inputs.uints[4], call.inputs.uints[5],
     call.inputs.uints[6], call.inputs.uints[7], call.inputs.uints[8]
   )
-  buyOrder = orders.mutations.setTimeSeriesRelationships(
-    buyOrder, timeSeriesResult
-  )
+ 
   buyOrder = orders.mutations.setMetadataRelationships(
     buyOrder, metadataResult
   )
@@ -153,9 +148,7 @@ export function handleAtomicMatch_(call: AtomicMatch_Call): void {
     paymentToken.id, call.inputs.uints[13], call.inputs.uints[14],
     call.inputs.uints[15], call.inputs.uints[16], call.inputs.uints[17]
   )
-  sellOrder = orders.mutations.setTimeSeriesRelationships(
-    sellOrder, timeSeriesResult
-  )
+  
   sellOrder = orders.mutations.setMetadataRelationships(
     sellOrder, metadataResult
   )
@@ -182,7 +175,7 @@ export function handleAtomicMatch_(call: AtomicMatch_Call): void {
 
     mappingHelpers.handleBundleSale(
       decoded, metadataResult.txId, paymentToken.id, paymentToken.decimals,
-      matchPrice, timestamp, timeSeriesResult, metadataResult
+      matchPrice, timestamp, metadataResult
     )
 
 
@@ -193,7 +186,7 @@ export function handleAtomicMatch_(call: AtomicMatch_Call): void {
       let decoded = abi.decodeAbi_transferFrom_Method(mergedCallData)
       mappingHelpers.handleSingleSale(
         decoded, metadataResult.txId, call.inputs.addrs[11],
-        paymentToken.id, paymentToken.decimals, matchPrice, timestamp, timeSeriesResult,
+        paymentToken.id, paymentToken.decimals, matchPrice, timestamp,
         metadataResult
       )
     }

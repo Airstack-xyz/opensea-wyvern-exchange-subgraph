@@ -21,7 +21,6 @@ dataSources:
         - Asset
         - AssetOwner
         - Token
-        - Balance
         - Block
         - Transaction
         - Erc20Transaction
