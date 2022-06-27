@@ -1,5 +1,5 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
-import { DailyNFTTransfer } from "../generated/schema";
+import { AccountDailyNFTTransferFeed, DailyNFTTransfer } from "../generated/schema";
 import { abi, accounts, nftContracts, nfts, sales, erc20Tokens, metadata } from "./modules";
 import { getDayOpenTime, getDaysSinceEpoch } from "./modules/datetime";
 import { getUsdPrice } from "./modules/prices";
@@ -137,6 +137,16 @@ export namespace mappingHelpers {
 	    
 		dailyNFTTransaction.orderUSDVolume = daySinceEpoch.toString()+"_"+dailyNFTTransaction.volumeInUSD.toString();
 		dailyNFTTransaction.save();
+
+		let accountDailyNFTTransferFeedId =  seller + '-' + dailyNFTTransaction.id;
+		let accountDailyNFTTransferFeed = new AccountDailyNFTTransferFeed(accountDailyNFTTransferFeedId);
+
+		accountDailyNFTTransferFeed.account = seller;
+		accountDailyNFTTransferFeed.startDayTimestamp = getDayOpenTime(timestamp);
+		accountDailyNFTTransferFeed.daySinceEpoch = daySinceEpoch ;
+		accountDailyNFTTransferFeed.dailyNFTTransfer = dailyNFTTransaction.id;
+
+		accountDailyNFTTransferFeed.save();
 	}
 
 	function handleErc20Transfer(

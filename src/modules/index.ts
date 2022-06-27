@@ -1,7 +1,6 @@
 export * from "./abi"
 export * from "./accounts"
 export * from "./nftContracts"
-export * from "./balances"
 export * from "./entityCounters"
 export * from "./erc20Tokens"
 export * from "./globalState"
